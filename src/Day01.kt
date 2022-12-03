@@ -1,17 +1,14 @@
 fun main() {
-    fun part1(input: List<String>): Int {
-        return input.size
+    val inputList = readInput("Day01_test")
+    val mappedSums = mutableListOf<Int>()
+    inputList.reduce { acc, s ->
+        if (s.isEmpty()) {
+            mappedSums.add(acc.toInt())
+            "0"
+        } else {
+            (acc.toInt() + s.toInt()).toString()
+        }
     }
-
-    fun part2(input: List<String>): Int {
-        return input.size
-    }
-
-    // test if implementation meets criteria from the description, like:
-    val testInput = readInput("Day01_test")
-    check(part1(testInput) == 1)
-
-    val input = readInput("Day01")
-    println(part1(input))
-    println(part2(input))
+    mappedSums.sortDescending()
+    println(mappedSums.take(3).sum())
 }
