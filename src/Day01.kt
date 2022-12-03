@@ -9,5 +9,6 @@ fun main() {
             (acc.toInt() + s.toInt()).toString()
         }
     }
-    println(mappedSums.max())
+    mappedSums.sortDescending()
+    println(mappedSums.take(3).sum())
 }
