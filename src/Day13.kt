@@ -85,6 +85,19 @@ fun main() {
             total += index + 1
         }
     }
-    println(total)
+    val arr = input.filter { it.isNotEmpty() }.toMutableList().apply { addAll(listOf("[[2]]", "[[6]]")) }.toTypedArray()
+
+    for (i in 0 until arr.size - 1) {
+        for (j in i + 1 until arr.size) {
+            val first = parseIntoSequence(arr[i])
+            val second = parseIntoSequence(arr[j])
+            if (compare(second, first) > 0) {
+                val temp = arr[i]
+                arr[i] = arr[j]
+                arr[j] = temp
+            }
+        }
+    }
+    println((arr.indexOf("[[2]]") + 1) * (arr.indexOf("[[6]]") + 1))
 
 }
