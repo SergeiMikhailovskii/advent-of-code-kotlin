@@ -9,13 +9,7 @@ fun main() {
         val d: Int
     )
 
-    class Beacon(
-        val x: Int,
-        val y: Int
-    )
-
     val sensors = mutableListOf<Sensor>()
-    val beacons = mutableListOf<Beacon>()
 
     var minB = Int.MAX_VALUE
     var maxB = Int.MIN_VALUE
@@ -30,20 +24,32 @@ fun main() {
         minB = minOf(minB, sx.toInt())
         maxD = maxOf(maxD, d)
         sensors.add(Sensor(sx.toInt(), sy.toInt(), d))
-        beacons.add(Beacon(bx.toInt(), by.toInt()))
     }
-    var total = 0
-    for (i in minB - maxD..maxB + maxD) {
-        val py = 2000000
-        if (beacons.any { it.x == i && it.y == py }) {
-            continue
-        }
-        for (it in sensors) {
-            if (abs(it.x - i) + abs(it.y - py) <= it.d) {
-                total++
-                break
+
+    val max = 4_000_000
+    class Ev(val x: Int, val d: Int)
+
+    val es = mutableListOf<Ev>()
+    for (i in 0..max) {
+        es.clear()
+        sensors.forEach {
+            if (abs(it.y - i) <= it.d) {
+                val w = it.d - abs(it.y - i)
+                es += Ev(it.x - w, 1)
+                es += Ev(it.x + w + 1, -1)
             }
         }
+        es.sortWith(compareBy(Ev::x, Ev::d))
+        var px = es[0].x
+        var cnt = 0
+        es.forEach {
+            if (it.x > px) {
+                if (cnt == 0 && px in 0..max) {
+                    println("${px * max.toLong() + i}")
+                }
+                px = it.x
+            }
+            cnt += it.d
+        }
     }
-    println(total)
 }
