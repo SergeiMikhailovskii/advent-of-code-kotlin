@@ -7,6 +7,8 @@ fun main() {
         val y: Int
     )
 
+    val initial = 500
+
     val input = readInput("Day14_test")
     val mapped = input.map {
         it.split(" -> ").map {
@@ -14,19 +16,20 @@ fun main() {
             Point(arr[0].toInt(), arr[1].toInt())
         }
     }
-    var minX = Int.MAX_VALUE
-    var maxX = Int.MIN_VALUE
     var maxY = Int.MIN_VALUE
     for (i in mapped.indices) {
         for (j in mapped[i].indices) {
-            minX = min(minX, mapped[i][j].x)
-            maxX = max(maxX, mapped[i][j].x)
             maxY = max(maxY, mapped[i][j].y)
         }
     }
+    val minX = initial - maxY - 2
+    val maxX = initial + maxY + 2
     val width = maxX - minX + 1
 
-    val matrix = Array(maxY) { Array(width) { "." } }
+    val matrix = Array(maxY + 3) { Array(width) { "." } }
+    for (j in matrix.last().indices) {
+        matrix[matrix.size - 1][j] = "#"
+    }
 
     mapped.forEach {
         var start = it[0]
@@ -34,20 +37,17 @@ fun main() {
             val end = it[i]
             if (start.x == end.x) {
                 for (j in min(start.y, end.y)..max(start.y, end.y)) {
-                    matrix[j - 1][start.x - minX] = "#"
+                    matrix[j][start.x - minX] = "#"
                 }
             } else if (start.y == end.y) {
                 for (j in min(start.x, end.x)..max(start.x, end.x)) {
-                    matrix[start.y - 1][j - minX] = "#"
+                    matrix[start.y][j - minX] = "#"
                 }
             }
             start = end
         }
     }
     fun moveLower(point: Point): Boolean {
-        if (point.x == 0 && point.y == 8) {
-            println()
-        }
         if (matrix[point.y][point.x] == ".") {
             if (!moveLower(Point(y = point.y + 1, x = point.x))) {
                 matrix[point.y][point.x] = "0"
@@ -58,7 +58,7 @@ fun main() {
                 matrix[point.y][point.x - 1] = "0"
             }
             return true
-        } else if (point.x < width - 1 && matrix[point.y][point.x + 1] == ".") {
+        } else if (matrix[point.y][point.x + 1] == ".") {
             if (!moveLower(Point(y = point.y + 1, x = point.x + 1))) {
                 matrix[point.y][point.x + 1] = "0"
             }
@@ -70,11 +70,12 @@ fun main() {
     var counter = 0
     try {
         while (true) {
-            moveLower(Point(500 - minX, 0))
+            moveLower(Point(initial - minX, 0))
             counter++
         }
     } catch (e: ArrayIndexOutOfBoundsException) {
         println(counter)
     }
+
 
 }
