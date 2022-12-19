@@ -1,14 +1,15 @@
 fun main() {
 
-    val timeLimit = 30
+    val timeLimit = 26
 
     class Valve(
         val rate: Int,
         val tunnels: List<String>,
     )
 
-    class PathA(
-        val valves: List<Valve>,
+    class PathB(
+        val valvesMe: List<Valve>,
+        val valvesElephant: List<Valve>,
         /**
          * Key - valve
          * value - opened time
@@ -28,8 +29,9 @@ fun main() {
 
     val maxOpenedValves = valves.values.count { it.rate > 0 }
     val start = valves["AA"]!!
-    val startPath = PathA(
-        valves = listOf(start),
+    val startPath = PathB(
+        valvesMe = listOf(start),
+        valvesElephant = listOf(start),
         opened = hashMapOf()
     )
     var allPaths = listOf(startPath)
@@ -37,34 +39,74 @@ fun main() {
     var time = 1
 
     while (time < timeLimit) {
-        val newPath = mutableListOf<PathA>()
+        val newPaths = mutableListOf<PathB>()
 
         for (currentPath in allPaths) {
-            // try to change to break
             if (currentPath.opened.size == maxOpenedValves) continue
 
-            val currentLast = currentPath.valves.last()
-            val currentValves = currentPath.valves
+            val currentLastMe = currentPath.valvesMe.last()
+            val currentValvesMe = currentPath.valvesMe
 
-            if (currentLast.rate > 0 && !currentPath.opened.containsKey(currentLast)) {
+            val currentLastElephant = currentPath.valvesElephant.last()
+            val currentValvesElephant = currentPath.valvesElephant
+
+            val openMe = currentLastMe.rate > 0 && !currentPath.opened.containsKey(currentLastMe)
+            val openElephant = currentLastElephant.rate > 0 && !currentPath.opened.containsKey(currentLastElephant)
+
+            if (openMe || openElephant) {
                 val opened = currentPath.opened.toMutableMap()
-                opened[currentLast] = time
-                val possibleValves = currentValves + currentLast
-                val possiblePath = PathA(possibleValves, opened)
-                newPath.add(possiblePath)
+
+                val possibleValvesMe = if (openMe) {
+                    opened[currentLastMe] = time
+                    listOf(currentValvesMe + currentLastMe)
+                } else {
+                    currentLastMe.tunnels.map {
+                        val valve = valves[it]!!
+                        val possibleValves = currentValvesMe + valve
+                        possibleValves
+                    }
+                }
+
+                val possibleValvesElephant = if (openElephant) {
+                    opened[currentLastElephant] = time
+                    listOf(currentValvesElephant + currentLastElephant)
+                } else {
+                    currentLastElephant.tunnels.map {
+                        val valve = valves[it]!!
+                        val possibleValves = currentValvesElephant + valve
+                        possibleValves
+                    }
+                }
+
+                for (me in possibleValvesMe) {
+                    for (elephant in possibleValvesElephant) {
+                        val possibleNewPath = PathB(me, elephant, opened)
+                        newPaths += possibleNewPath
+                    }
+                }
             }
 
-            val possiblePaths = currentLast.tunnels.map {
-                val valve = valves[it]!!
-                val possibleValves = currentValves + valve
-                val possiblePath = PathA(possibleValves, currentPath.opened)
+            val combinedLeads = currentLastMe.tunnels.map { me ->
+                currentLastElephant.tunnels.map { elephant ->
+                    me to elephant
+                }
+            }.flatten()
+                .filter { (a, b) -> a != b }
+
+            val possiblePaths = combinedLeads.map { (me, elephant) ->
+                val valveMe = valves[me]!!
+                val valveElephant = valves[elephant]!!
+
+                val possibleValvesMe = currentValvesMe + valveMe
+                val possibleValvesElephant = currentValvesElephant + valveElephant
+                val possiblePath = PathB(possibleValvesMe, possibleValvesElephant, currentPath.opened)
                 possiblePath
             }
 
-            newPath.addAll(possiblePaths)
+            newPaths.addAll(possiblePaths)
         }
 
-        allPaths = newPath.sortedByDescending { it.total }.take(1000)
+        allPaths = newPaths.sortedByDescending { it.total }.take(200000)
 
         if (allPaths.first().total > bestPath.total) {
             bestPath = allPaths.first()
